@@ -26,32 +26,37 @@ ENV LANG en_US.utf8
 
 RUN mkdir /docker-entrypoint-initdb.d
 
-ENV PG_MAJOR %%PG_MAJOR%%
-ENV PG_MAJOR_NODOT %%PG_MAJOR_NODOT%%
-ENV PG_VERSION %%PG_VERSION%%
-ENV OSV rhel7
+ENV PG_REPOURL="https://download.postgresql.org/pub/repos/yum"
+ENV PG_MAJOR=%%PG_MAJOR%% \
+PG_MAJOR_NODOT=%%PG_MAJOR_NODOT%% \
+PG_MINOR=%%MINORVERSION% \
+PG_REVISION=%%REVISION%%
+ 
+ENV PG_VERSION=${PG_MAJOR}.${PG_MINOR}-${PG_REVISION} \
+PGDG_VERSION=${PG_MAJOR}-${PG_REVISION} \
+OSV_NAME=rhel7 
 
-RUN rpm --import https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG && rpm --import https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-${PG_MAJOR_NODOT}
+ENV PG_REPO="${PG_REPOURL}/${PG_MAJOR}/redhat/rhel-7.2-x86_64"
 
-RUN echo -e "[postgres_repo]\nname=Postgres Repo\nbaseurl=https://download.postgresql.org/pub/repos/yum/${PG_MAJOR}/redhat/rhel-7-x86_64\nenabled=1\ngpgcheck=1" > /etc/yum.repos.d/postgres.rpm
+RUN rpm --import ${PG_REPOURL}/RPM-GPG-KEY-PGDG && rpm --import ${PG_REPOURL}/RPM-GPG-KEY-PGDG-${PG_MAJOR_NODOT}
+
+RUN echo -e "[postgres_repo]\nname=Postgres Repo\nbaseurl=${PG_REPO}\nenabled=1\ngpgcheck=1" > /etc/yum.repos.d/postgres.repo
 
 RUN yum update -y \
-        && yum install -y pgdg-centos${PG_MAJOR_NODOT}-${PG_VERSION}.noarch.rpm \
-	&& yum install -y postgresql${PG_MAJOR_NODOT}-server-${PG_VERSION}PGDG.${OSV}.x86_64 \
+        && yum install -y ${PG_REPO}/pgdg-centos${PG_MAJOR_NODOT}-${PGDG_VERSION}.noarch.rpm \
+	&& yum install -y ${PG_REPO}/postgresql${PG_MAJOR_NODOT}-server-${PG_VERSION}PGDG.${OSV_NAME}.x86_64.rpm \
 #	&& sed -ri 's/#(create_main_cluster) .*$/\1 = false/' /etc/postgresql-common/createcluster.conf \
 	&& yum install -y \
-		postgresql postgresql${PG_MAJOR_NODOT}-${PG_VERSION}PGDG.${OSV}.x86_64 \
-		postgresql${PG_MAJOR_NODOT}-contrib-${PG_VERSION}PGDG.${OSV}.x86_64 \
+		${PG_REPO}/postgresql${PG_MAJOR_NODOT}-${PG_VERSION}PGDG.${OSV_NAME}.x86_64.rpm \
+		${PG_REPO}/postgresql${PG_MAJOR_NODOT}-contrib-${PG_VERSION}PGDG.${OSV_NAME}.x86_64.rpm \
 	&& yum clean all
 
 # make the sample config easier to munge (and "correct by default")
-RUN mv -v /usr/share/postgresql/$PG_MAJOR/postgresql.conf.sample /usr/share/postgresql/ \
-	&& ln -sv ../postgresql.conf.sample /usr/share/postgresql/$PG_MAJOR/ \
-	&& sed -ri "s!^#?(listen_addresses)\s*=\s*\S+.*!\1 = '*'!" /usr/share/postgresql/postgresql.conf.sample
+RUN sed -ri "s!^#?(listen_addresses)\s*=\s*\S+.*!\1 = '*'!" /usr/pgsql-${PG_MAJOR}/share/postgresql.conf.sample
 
 RUN mkdir -p /var/run/postgresql && chown -R postgres /var/run/postgresql
 
-ENV PATH /usr/lib/postgresql/${PG_MAJOR}/bin:$PATH
+ENV PATH /usr/pgsql-${PG_MAJOR}/bin:$PATH
 ENV PGDATA /var/lib/postgresql/data
 VOLUME /var/lib/postgresql/data
 
