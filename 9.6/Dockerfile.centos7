@@ -29,7 +29,7 @@ RUN mkdir /docker-entrypoint-initdb.d
 ENV PG_REPO="https://download.postgresql.org/pub/repos/yum"
 ENV PG_MAJOR=9.6 \
 PG_MAJOR_NODOT=96 \
-PG_MINOR=beta4 \
+PG_MINOR=.0 \
 PG_REVISION=1 \
 RHEL_VERSION=7.3 \
 REPO_RHEL_ARCH=x86_64 \
