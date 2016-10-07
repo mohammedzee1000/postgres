@@ -26,18 +26,11 @@ ENV LANG en_US.utf8
 
 RUN mkdir /docker-entrypoint-initdb.d
 
-ENV PG_REPO="https://download.postgresql.org/pub/repos/yum"
-ENV PG_MAJOR=9.6 \
-PG_MAJOR_NODOT=96 \
-PG_MINOR=.0 \
-PG_REVISION=1 \
-RHEL_VERSION=7.3 \
-REPO_RHEL_ARCH=x86_64 \
-RHEL_ARCH=x86_64 
- 
-ENV PG_VERSION=${PG_MAJOR}${PG_MINOR}-${PG_REVISION} \
-PGDG_VERSION=${PG_MAJOR}-${PG_REVISION} \
-OSV_NAME=rhel7 
+ENV PG_REPO "https://download.postgresql.org/pub/repos/yum"
+ENV PG_MAJOR "9.6" 
+ENV PG_MAJOR_NODOT "96"
+ENV RHEL_VERSION "7.3" 
+ENV REPO_RHEL_ARCH "x86_64" 
 
 ENV PG_REPOURL="${PG_REPO}/${PG_MAJOR}/redhat/rhel-${RHEL_VERSION}-${REPO_RHEL_ARCH}"
 
@@ -46,12 +39,12 @@ RUN rpm --import ${PG_REPO}/RPM-GPG-KEY-PGDG && rpm --import ${PG_REPO}/RPM-GPG-
 RUN echo -e "[postgres_repo]\nname=Postgres Repo\nbaseurl=${PG_REPOURL}\nenabled=1\ngpgcheck=1" > /etc/yum.repos.d/postgres.repo
 
 RUN yum update -y \
-        && yum install -y ${PG_REPOURL}/pgdg-centos${PG_MAJOR_NODOT}-${PGDG_VERSION}.noarch.rpm \
-	&& yum install -y ${PG_REPOURL}/postgresql${PG_MAJOR_NODOT}-server-${PG_VERSION}PGDG.${OSV_NAME}.${RHEL_ARCH}.rpm \
+        && yum install -y pgdg-centos${PG_MAJOR_NODOT} \
+	&& yum install -y postgresql${PG_MAJOR_NODOT}-server \
 #	&& sed -ri 's/#(create_main_cluster) .*$/\1 = false/' /etc/postgresql-common/createcluster.conf \
 	&& yum install -y \
-		${PG_REPOURL}/postgresql${PG_MAJOR_NODOT}-${PG_VERSION}PGDG.${OSV_NAME}.${RHEL_ARCH}.rpm \
-		${PG_REPOURL}/postgresql${PG_MAJOR_NODOT}-contrib-${PG_VERSION}PGDG.${OSV_NAME}.${RHEL_ARCH}.rpm \
+		postgresql${PG_MAJOR_NODOT} \
+		postgresql${PG_MAJOR_NODOT}-contrib \
 	&& yum clean all
 
 # make the sample config easier to munge (and "correct by default")
