@@ -1,5 +1,5 @@
 # vim:set ft=dockerfile:
-FROM centos:centos7
+FROM registry.centos.org/centos/centos
 
 # explicitly set user/group IDs
 RUN groupadd -r postgres && useradd -r -g postgres postgres
